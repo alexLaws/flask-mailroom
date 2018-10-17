@@ -3,7 +3,7 @@ import base64
 
 from flask import Flask, render_template, request, redirect, url_for, session
 
-from model import Donor, Donation 
+from model import Donor, Donation
 
 app = Flask(__name__)
 
@@ -37,6 +37,29 @@ def create():
         return redirect(url_for('all'))
 
     return render_template('create.jinja2')
+
+
+@app.route('/view/')
+def view():
+    name = request.args.get('name', None)
+
+    if name is None:
+        return render_template('view.jinja2')
+    else:
+        try:
+            donor = Donor.get(Donor.name == name)
+        except Donor.DoesNotExist:
+            return render_template('view.jinja2', error="Donor Not Found")
+
+        donations = Donation.select().where(Donation.donor == donor)
+        total = 0
+        for donation in donations:
+            total += donation.value
+
+        return render_template('view.jinja2',
+                               donations=donations,
+                               name=donor.name,
+                               total=total)
 
 
 if __name__ == "__main__":
